@@ -88,7 +88,7 @@ class Game
 		@exit_game = false
 		while not @exit_game
 
-			#clearscreen
+			clearscreen
 
 			show_title
 
