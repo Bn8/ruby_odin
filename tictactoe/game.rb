@@ -1,17 +1,9 @@
 
 require_relative 'board'
 require_relative 'helpers'
-
-
-game_screen = \
-"Chose input (..)
-
-remember ...
-
-"
+require_relative 'ai'
 
 class Game
-	@@players = {:player1 => "Player 1", :player2 => "Player 2"}
 	@@options = {
 		:exit => ['q','Q'], 
 		:new_game => ['n','N'],
@@ -27,6 +19,10 @@ class Game
 		@board = Board.new
 		@error_message = nil
 		@winner = nil
+		@tie = false
+		@player_move = nil
+		@player_symbol = Board.symbols[0]
+		@ai = Ai.new(@board, Board.symbols[1])
 		#@turn = rand(2)
 	end
 
@@ -49,14 +45,50 @@ class Game
 
 	def show_winner_message
 		puts "'#{@winner}' has won !!!" if @winner
+		puts "Its a tie !" if @tie
+	end
+
+	# control the game by the user input given (exit, new game, make move..)
+	def handle_user_input(input)
+		@player_move = nil
+
+		if @@options[:exit].include? input
+			puts "Terminating game.."
+			@exit_game = true
+
+		elsif @@options[:new_game].include? input
+			new_game
+
+		elsif @@options[:moves].include? input.to_i and @winner == nil and @tie == false
+			int_input = input.to_i
+			if @board.is_open(int_input)
+				@board.set_cell(int_input, @player_symbol)
+				@player_move = true
+			else
+				@error_message = "You cannot move to <#{int_input}>, choose again."
+			end
+
+		else
+			@error_message = "Invalid input '#{input}'"
+
+		end
+
+	end
+
+	def is_win(sym)
+		# check end game
+		if @board.is_winner(sym)
+			@winner = sym
+			return true
+		end
+		return false
 	end
 
 	def engine
-		exit_game = false
-		while not exit_game
-			player_symbol = Board.symbols[0]
+		@exit_game = false
+		while not @exit_game
 
-			clearscreen
+			#clearscreen
 
 			show_title
 
@@ -72,38 +104,24 @@ class Game
 
 			@board.print
 
-			player_move = nil
+			@player_move = nil
 
 			input = gets.chomp
 
-			if @@options[:exit].include? input
-				puts "Terminating game.."
-				exit_game = true
-
-			elsif @@options[:new_game].include? input
-				new_game
-
-			elsif @@options[:moves].include? input.to_i and @winner == nil
-				int_input = input.to_i
-				if @board.is_open(int_input)
-					@board.set_cell(int_input, player_symbol)
-					player_move = true
-				else
-					@error_message = "You cannot move to <#{int_input}>, choose again."
-				end
-
-			else
-				@error_message = "Invalid input '#{input}'"
-
-			end
+			handle_user_input(input)
 
 			# check if player made a valid move
-			if player_move != nil
-				# check end game
-				if @board.is_winner(player_symbol)
-					@winner = player_symbol
+			if @winner == nil and @tie == false and @player_move != nil
+				if @board.valid_moves.size == 0
+					@tie = true
+				elsif !is_win(@player_symbol)
+					ai_move = @ai.make_move(input.to_i)
+					if ai_move == nil
+						@tie = true
+					elsif is_win(@ai.sym)
+						@winner = @ai.sym
+					end
 				end
-				# ai makes a move
 			end
 
 		end

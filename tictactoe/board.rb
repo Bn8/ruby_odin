@@ -22,15 +22,18 @@ class Board
 	@@symbols = ['X', 'O']
 	def self.symbols; @@symbols; end
 
+	attr_reader :valid_moves
+
 	def initialize(args=nil)
 		@cells = (1..9).map { |i| Cell.new(i) } # create 9 cells each numbered from 1 to 9
+		@valid_moves = (1..9).to_a
 	end
-
 
 	def set_cell(cell_number, value)
 		@cells[cell_number-1].val = value
+		@valid_moves.delete(cell_number)
 	end
-	
+
 	def is_open(cell_number)
 		return ( not @@symbols.include? @cells[cell_number-1].val )
 	end
