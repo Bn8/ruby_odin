@@ -40,13 +40,11 @@ class Board
 
 	# return array of numbers-indices (1..9) that considered a win in the @cells array
 	def win_arrays
-		winarrs = [
+		return  [
 			[1,2,3],[4,5,6],[7,8,9],
 			[1,4,7],[2,5,8],[3,6,9],
 			[1,5,9],[3,5,7]
 		]
-
-		return winarrs
 	end
 
 	# return true if given symbol is winning the board
