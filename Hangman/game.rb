@@ -1,4 +1,6 @@
 
+require 'json'
+
 def clearscreen
 	system "clear" or system "cls"
 end
@@ -41,6 +43,7 @@ class GameOptions
 end
 
 class Game
+	@@serializer = JSON
 	@@options = {
 		:exit => 		GameOptions.new,
 		:new => 		GameOptions.new,
@@ -83,7 +86,7 @@ class Game
 			end
 		end
 		puts " ***************************"
-
+		#puts "where are we #{@game_status}, #{@game_status.__id__},#{:in_progress.__id__}"
 		if @game_status == :in_progress
 			puts "Remaining guesses: #{@guesses_left}"
 			puts "Wrong letteres guessed so far: #{@letters_wrong.join(',')}"
@@ -121,10 +124,9 @@ class Game
 		@game_status = :in_progress
 		@word_goal = @words.get_rand
 		@word_guess = ["_"]*@word_goal.size
-		@letters_right = []
 		@letters_wrong = []
 		@guesses_left = 12
-
+		@session_id = rand(9999999999)
 	end
 
 	def game_word_guess word
@@ -148,9 +150,14 @@ class Game
 	end
 
 	def game_load _inp
+		unserialize JSON.load(File.read("savegame.json")), exceptions=["@game_status"]
+		@game_status = :in_progress
+		puts ">Game Loaded<"
 	end
 
 	def game_save _inp
+		File.write("savegame.json",serialize)
+		puts ">Game Saved<"
 	end
 
 	def game_exit _inp
@@ -184,6 +191,25 @@ class Game
 			indices.push(index) if letter == letter_to_find
 		end
 		return indices
+	end
+
+#========== serialize ==================#
+
+	def serialize
+		obj = {}
+		instance_variables.map do |var|
+			obj[var] = instance_variable_get(var)
+		end
+
+		@@serializer.dump obj
+	end
+
+	def unserialize(obj,exceptions=[])
+		obj.keys.each do |key|
+			unless exceptions.include? key
+				instance_variable_set(key, obj[key])
+			end
+		end
 	end
 
 end
